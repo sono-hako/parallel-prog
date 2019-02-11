@@ -7,11 +7,11 @@
 
 
 typedef struct _node{
-	int chunk_low;//low index of chunk
-	int chunk_high;//top index of chunk
-	int k;//num to sift multiples of
-	int new;//flag that worker watches for new work.
-	int* marked;//array to store 'marked' values (was a multiple of a given k)
+	int chunk_low;
+	int chunk_high;
+	int k;
+	int new;
+	int* marked;
 	pthread_cond_t consu_wait;
 	struct _node* next;
 }node_t;
@@ -45,7 +45,6 @@ pthread_t* spawnWorkers(queue_t* queue, int threads){
 		return arr_tid;
 }
 
-/* Not particularly needed, but joins all the worker threads, give array of threadIDs */
 void joinWorkers(pthread_t* tid, int threads){
 	int i = 0;
 	for(i = 0; i < threads; i++){
@@ -53,8 +52,6 @@ void joinWorkers(pthread_t* tid, int threads){
 	}
 }
 
-
-/* Init. the queue struct. */
 queue_t* queueInit(int c, int* elements){
 	queue_t* queue;
 	
@@ -75,11 +72,10 @@ queue_t* queueInit(int c, int* elements){
 	return queue;
 }
 
-/* Add a new item to the queue. */
 void enqueue(queue_t* queue, node_t* newNodeChunk){
 	
 	newNodeChunk->next = NULL;
-	if(queue->rear == NULL && queue->front == NULL){//empty queue
+	if(queue->rear == NULL && queue->front == NULL){
 		queue->front = queue->rear = newNodeChunk;
 		return;
 	}
@@ -89,25 +85,18 @@ void enqueue(queue_t* queue, node_t* newNodeChunk){
 	return;
 }
 
-/* Remove a single item from the queue */
 node_t* dequeue(queue_t* queue){
 	 node_t* chunk = queue->front;
 	 
 	 if(queue->front == queue->rear){
-		queue->front = queue->rear = NULL; //queue is empty now
+		queue->front = queue->rear = NULL;
 	 } else {
 		queue->front = queue->front->next;
 	 }
 	 
 	 return chunk;
 }
-/* 
-Manages the producer thread for prime sifting.
-Distributes chunks to worker threads, and a multiple to mark by.
-Takes the workers results and compiles them into primes[] for printing.
 
-Waits for the front of the queue to not be NULL before distributing work.
- */
 void* produceSift(void* arg){
 	int i = 0;
 	int j = 0;
